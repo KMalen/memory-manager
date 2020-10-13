@@ -41,7 +41,18 @@ m_id m_malloc(int size_of_chunk, m_err_code* error) {
 
 
 void m_free(m_id ptr, m_err_code* error) {
-  *error = M_ERR_OK;
+    
+    for (int i = 0; i < indexChunk; i++) {
+        
+        if (ptr == arrayOfChunks[i].m_id) {
+            arrayOfChunks[i].m_id = NULL;
+            arrayOfChunks[i].size = 0;
+            *error = M_ERR_OK;
+            return;
+        }
+    }
+    
+    *error = M_ERR_INVALID_CHUNK;
 }
 
 
@@ -83,4 +94,9 @@ void m_init(int number_of_pages, int size_of_page) {
   _g_allocator_memory_size = number_of_pages * size_of_page;
   _g_allocator_memory = malloc(_g_allocator_memory_size);
   _g_bytes_allocated = 0;
+
+}
+
+void* getInit(){
+    return _g_allocator_memory;
 }

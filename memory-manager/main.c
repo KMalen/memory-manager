@@ -70,11 +70,6 @@ void errorAbort(int error_code){
     }
 }
 
-//void toArray(m_id* idChunk, int sizeChunk, int index){
-//    arrayOfChunks[index].m_id = idChunk;
-//    arrayOfChunks[index].size = sizeChunk;
-//}
-
 // TODO:
 
 // придумать структуру хранения сегментов
