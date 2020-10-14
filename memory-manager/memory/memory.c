@@ -84,10 +84,13 @@ void m_write(m_id write_to_id, void* write_from_buffer, int size_to_write, m_err
                 *error = M_ERR_ALLOCATION_OUT_OF_MEMORY;
                 return;
             }
+            
+            if (arrayOfChunks[i].m_id == NULL) {
+                *error = M_ERR_INVALID_CHUNK;
+                return;
+            }
         }
     }
-    
-    // логика на провeрку существования  выбранного куска
     
   memcpy(write_to_id, write_from_buffer, size_to_write);
   *error = M_ERR_OK;
