@@ -7,6 +7,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 #include "memory.h"
 
@@ -20,7 +22,7 @@ struct Chunks {
 };
 
 struct Chunks arrayOfChunks[10];
-int indexChunk = 0;
+int index_chunk = 0;
 
 m_id m_malloc(int size_of_chunk, m_err_code* error) {
     
@@ -31,9 +33,9 @@ m_id m_malloc(int size_of_chunk, m_err_code* error) {
 
   _g_bytes_allocated += size_of_chunk;
     
-    arrayOfChunks[indexChunk].m_id = _g_allocator_memory + _g_bytes_allocated;
-    arrayOfChunks[indexChunk].size = size_of_chunk;
-    indexChunk++;
+    arrayOfChunks[index_chunk].m_id = _g_allocator_memory + _g_bytes_allocated;
+    arrayOfChunks[index_chunk].size = size_of_chunk;
+    index_chunk++;
 
   *error = M_ERR_OK;
   return _g_allocator_memory + _g_bytes_allocated;
@@ -42,11 +44,13 @@ m_id m_malloc(int size_of_chunk, m_err_code* error) {
 
 void m_free(m_id ptr, m_err_code* error) {
     
-    for (int i = 0; i < indexChunk; i++) {
+    for (int i = 0; i < index_chunk; i++) {
         
         if (ptr == arrayOfChunks[i].m_id) {
+            
             arrayOfChunks[i].m_id = NULL;
-            arrayOfChunks[i].size = 0;
+            deleteChunkMemory(ptr);
+            
             *error = M_ERR_OK;
             return;
         }
@@ -56,9 +60,9 @@ void m_free(m_id ptr, m_err_code* error) {
 }
 
 
-void m_read(m_id read_from_id,void* read_to_buffer, int size_to_read, m_err_code* error) {
+void m_read(m_id read_from_id, void* read_to_buffer, int size_to_read, m_err_code* error) {
     
-    for (int i = 0; i < indexChunk; i++) {
+    for (int i = 0; i < index_chunk; i++) {
         if (read_from_id == arrayOfChunks[i].m_id) {
             if (size_to_read > arrayOfChunks[i].size) {
                 *error = M_ERR_OUT_OF_BOUNDS;
@@ -74,7 +78,7 @@ void m_read(m_id read_from_id,void* read_to_buffer, int size_to_read, m_err_code
 
 void m_write(m_id write_to_id, void* write_from_buffer, int size_to_write, m_err_code* error) {
     
-    for (int i = 0; i < indexChunk; i++) {
+    for (int i = 0; i < index_chunk; i++) {
         if (write_to_id == arrayOfChunks[i].m_id) {
             if (size_to_write > arrayOfChunks[i].size) {
                 *error = M_ERR_ALLOCATION_OUT_OF_MEMORY;
@@ -83,10 +87,34 @@ void m_write(m_id write_to_id, void* write_from_buffer, int size_to_write, m_err
         }
     }
     
+    // логика на провeрку существования  выбранного куска
+    
   memcpy(write_to_id, write_from_buffer, size_to_write);
   *error = M_ERR_OK;
 }
 
+void m_writeToFreeChunk(void* write_from_buffer, int size_to_write){
+    
+    bool m_write_done = false;
+    int selected_chunk_index = 0;
+    
+    for (int i = 0; i < index_chunk; i++) {
+        if (size_to_write == arrayOfChunks[i].size) {
+            
+            arrayOfChunks[i].m_id = _g_allocator_memory + arrayOfChunks[i].size;
+            memcpy(arrayOfChunks[i].m_id, write_from_buffer, size_to_write);
+            
+            m_write_done = true;
+            selected_chunk_index = i;
+            
+            break;
+        }
+    }
+    
+    if (m_write_done) printf("%s%d\n", "Information recorded successfully in chunk: ", selected_chunk_index);
+    else printf("%s\n", "Information not recorded successfully, no chunk with selected size");
+    
+}
 
 void m_init(int number_of_pages, int size_of_page) {
   if (_g_allocator_memory != NULL) free(_g_allocator_memory);
@@ -97,6 +125,10 @@ void m_init(int number_of_pages, int size_of_page) {
 
 }
 
-void* getInit(){
+void* getAllocatorMemory(){
     return _g_allocator_memory;
+}
+
+void deleteChunkMemory(void** m_id) {
+    *m_id = NULL;
 }
