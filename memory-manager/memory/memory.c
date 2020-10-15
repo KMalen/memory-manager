@@ -22,7 +22,7 @@ struct Chunks {
 };
 
 struct Chunks arrayOfChunks[10];
-int index_chunk = 0;
+int number_of_chunks = 0;
 
 m_id m_malloc(int size_of_chunk, m_err_code* error) {
     
@@ -33,9 +33,9 @@ m_id m_malloc(int size_of_chunk, m_err_code* error) {
 
   _g_bytes_allocated += size_of_chunk;
     
-    arrayOfChunks[index_chunk].m_id = _g_allocator_memory + _g_bytes_allocated;
-    arrayOfChunks[index_chunk].size = size_of_chunk;
-    index_chunk++;
+    arrayOfChunks[number_of_chunks].m_id = _g_allocator_memory + _g_bytes_allocated;
+    arrayOfChunks[number_of_chunks].size = size_of_chunk;
+    number_of_chunks++;
 
   *error = M_ERR_OK;
   return _g_allocator_memory + _g_bytes_allocated;
@@ -44,30 +44,36 @@ m_id m_malloc(int size_of_chunk, m_err_code* error) {
 
 void m_free(m_id ptr, m_err_code* error) {
     
-    for (int i = 0; i < index_chunk; i++) {
+    for (int i = 0; i < number_of_chunks; i++) {
         
         if (ptr == arrayOfChunks[i].m_id) {
             
             arrayOfChunks[i].m_id = NULL;
             deleteChunkMemory(ptr);
+            ptr = NULL;
             
             *error = M_ERR_OK;
             return;
         }
     }
     
-    *error = M_ERR_INVALID_CHUNK;
+    *error = M_ERR_ALREADY_DEALLOCATED;
 }
 
 
 void m_read(m_id read_from_id, void* read_to_buffer, int size_to_read, m_err_code* error) {
     
-    for (int i = 0; i < index_chunk; i++) {
+    for (int i = 0; i < number_of_chunks; i++) {
         if (read_from_id == arrayOfChunks[i].m_id) {
             if (size_to_read > arrayOfChunks[i].size) {
                 *error = M_ERR_OUT_OF_BOUNDS;
                 return;
             }
+        }
+        
+        if (arrayOfChunks[i].m_id == NULL) {
+            *error = M_ERR_INVALID_CHUNK;
+            return;
         }
     }
     
@@ -78,7 +84,7 @@ void m_read(m_id read_from_id, void* read_to_buffer, int size_to_read, m_err_cod
 
 void m_write(m_id write_to_id, void* write_from_buffer, int size_to_write, m_err_code* error) {
     
-    for (int i = 0; i < index_chunk; i++) {
+    for (int i = 0; i < number_of_chunks; i++) {
         if (write_to_id == arrayOfChunks[i].m_id) {
             if (size_to_write > arrayOfChunks[i].size) {
                 *error = M_ERR_ALLOCATION_OUT_OF_MEMORY;
@@ -101,7 +107,7 @@ void m_writeToFreeChunk(void* write_from_buffer, int size_to_write){
     bool m_write_done = false;
     int selected_chunk_index = 0;
     
-    for (int i = 0; i < index_chunk; i++) {
+    for (int i = 0; i < number_of_chunks; i++) {
         if (size_to_write == arrayOfChunks[i].size) {
             
             arrayOfChunks[i].m_id = _g_allocator_memory + arrayOfChunks[i].size;
@@ -132,6 +138,6 @@ void* getAllocatorMemory(){
     return _g_allocator_memory;
 }
 
-void deleteChunkMemory(void** m_id) {
+void deleteChunkMemory(m_id* m_id) {
     *m_id = NULL;
 }
