@@ -56,6 +56,9 @@ void m_init(int number_of_pages, int size_of_page);
 
 void* getAllocatorMemory(void);
 
+
+
+
 void deleteChunkMemory(m_id* m_id);
 
 #endif /* memory_h */

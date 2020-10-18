@@ -6,12 +6,9 @@
 //
 
 #include <stdlib.h>
-
-#include "memory/memory.h"
-
 #include <stdio.h>
 
-
+#include "memory/memory.h"
 
 
 void errorAbort(int error_code);
@@ -54,7 +51,7 @@ int main(int argc, const char * argv[]) {
 
     m_free(chunk_1, &error_code);
     errorAbort(error_code);
-
+    
     m_free(chunk_2, &error_code);
     errorAbort(error_code);
 
